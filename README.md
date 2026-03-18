@@ -25,6 +25,7 @@ lab_p104/
 |   |-- layers.py
 |   |-- model.py
 |   `-- transformer.py
+|-- requirements.txt
 |-- venv/
 `-- README.md
 ```
@@ -32,10 +33,20 @@ lab_p104/
 ## Requisitos
 
 - Python 3
-- PyTorch instalado no ambiente virtual
+- dependencias listadas em `requirements.txt`
 
-Observacao:
-o projeto roda sem `numpy`, mas o PyTorch pode exibir um aviso no terminal se essa biblioteca nao estiver instalada no `venv`.
+## Instalacao
+
+No PowerShell, a partir da raiz do projeto:
+
+```powershell
+venv\Scripts\pip.exe install -r requirements.txt
+```
+
+Dependencias atuais:
+
+- `torch==2.10.0`
+- `numpy==2.3.3`
 
 ## Como rodar
 
