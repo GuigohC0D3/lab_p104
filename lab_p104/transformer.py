@@ -1,76 +1,11 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 try:
-    from lab_p104.components import SinusoidalPosition
-    from lab_p104.layers import DecoderStack, EncoderStack
+    from lab_p104.generation import run_generation
+    from lab_p104.model import SimpleTransformer
 except ModuleNotFoundError:
-    from components import SinusoidalPosition
-    from layers import DecoderStack, EncoderStack
-
-
-class SimpleTransformer(nn.Module):
-    def __init__(self, vocab_size, d_model=512, depth=6, d_ff=2048, max_len=128):
-        super().__init__()
-        self.embedding = nn.Embedding(vocab_size, d_model)
-        self.position = SinusoidalPosition(d_model, max_len=max_len)
-        self.encoder = EncoderStack(depth, d_model, d_ff)
-        self.decoder = DecoderStack(depth, d_model, d_ff)
-        self.output_head = nn.Linear(d_model, vocab_size)
-
-    def make_causal_mask(self, seq_len, device):
-        return torch.triu(
-            torch.full((seq_len, seq_len), float("-inf"), device=device),
-            diagonal=1,
-        )
-
-    def encode(self, encoder_tokens):
-        x = self.embedding(encoder_tokens)
-        x = self.position(x)
-        return self.encoder(x)
-
-    def decode(self, decoder_tokens, memory):
-        y = self.embedding(decoder_tokens)
-        y = self.position(y)
-        mask = self.make_causal_mask(y.size(1), y.device)
-        return self.decoder(y, memory, mask)
-
-    def forward(self, encoder_tokens, decoder_tokens):
-        memory = self.encode(encoder_tokens)
-        decoded = self.decode(decoder_tokens, memory)
-        logits = self.output_head(decoded)
-        probs = F.softmax(logits, dim=-1)
-        return logits, probs
-
-
-@torch.no_grad()
-def run_generation(model, encoder_tokens, start_idx, eos_idx, vocab, max_steps=20):
-    generated = [start_idx]
-    original_training_state = model.training
-    model.eval()
-
-    encoder_tokens = encoder_tokens.to(model.embedding.weight.device)
-
-    print("Starting generation:", [vocab[i] for i in generated])
-
-    try:
-        while len(generated) < max_steps:
-            decoder_tokens = torch.tensor(
-                [generated],
-                dtype=torch.long,
-                device=encoder_tokens.device,
-            )
-            _, probs = model(encoder_tokens, decoder_tokens)
-            next_id = torch.argmax(probs[:, -1, :], dim=-1).item()
-            generated.append(next_id)
-            print(f"Step {len(generated) - 1}: '{vocab[next_id]}'")
-            if next_id == eos_idx:
-                break
-    finally:
-        model.train(original_training_state)
-
-    return generated
+    from generation import run_generation
+    from model import SimpleTransformer
 
 
 if __name__ == "__main__":
